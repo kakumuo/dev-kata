@@ -92,9 +92,9 @@ func TestPasses(t *testing.T) {
 	}
 
 	if item.SellIn != 10 {
-		t.Error("Expected quality to be 10")
+		t.Error("Expected sellin to be 10")
 	} else if item.Quality != 35 {
-		t.Error("Expect quality to have increased by 5")
+		t.Errorf("Expect quality to have increased by 5, got %d", item.Quality)
 	}
 
 	for i := 0; i < 5; i++ {
@@ -102,21 +102,21 @@ func TestPasses(t *testing.T) {
 	}
 
 	if item.SellIn != 5 {
-		t.Error("Expected quality to be 5")
+		t.Error("Expected sellin to be 5")
 	} else if item.Quality != 45 {
-		t.Error("Expect quality to have increased by 5")
+		t.Errorf("Expect quality to have increased by 5, got %d", item.Quality)
 	}
 
 	gildedrose.UpdateQuality(items)
 
 	if item.Quality != 48 {
-		t.Error("Expect quality to have increased by 3")
+		t.Errorf("Expect quality to have increased by 3, got %d", item.Quality)
 	}
 
 	gildedrose.UpdateQuality(items)
 
 	if item.Quality != 50 {
-		t.Error("Expect quality to not exceed 50")
+		t.Errorf("Expect quality to not exceed 50, got %d", item.Quality)
 	}
 
 	gildedrose.UpdateQuality(items)
@@ -158,5 +158,38 @@ func TestConjured(t *testing.T) {
 	if item.Quality != 0 {
 		t.Errorf("Expected quality to be 0, got %d", item.Quality)
 	}
+}
 
+func TestItemType(t *testing.T) {
+
+	var items = []*gildedrose.Item{
+		{"+5 Dexterity Vest", 10, 20},
+		{"Aged Brie", 2, 0},
+		{"Elixir of the Mongoose", 5, 7},
+		{"Sulfuras, Hand of Ragnaros", 0, 80},
+		{"Sulfuras, Hand of Ragnaros", -1, 80},
+		{"Backstage passes to a TAFKAL80ETC concert", 15, 20},
+		{"Backstage passes to a TAFKAL80ETC concert", 10, 49},
+		{"Backstage passes to a TAFKAL80ETC concert", 5, 49},
+		{"Conjured Mana Cake", 3, 6}, // <-- :O
+	}
+
+	var targetTypes = []gildedrose.ItemType{
+		gildedrose.IT_Generic,
+		gildedrose.IT_Aged,
+		gildedrose.IT_Generic,
+		gildedrose.IT_Legendary,
+		gildedrose.IT_Legendary,
+		gildedrose.IT_Pass,
+		gildedrose.IT_Pass,
+		gildedrose.IT_Pass,
+		gildedrose.IT_Conjured,
+	}
+
+	for i, item := range items {
+		var itemType = gildedrose.GetItemType(item)
+		if targetTypes[i] != itemType {
+			t.Errorf("Expected type: %d on item '%s', got: %d", targetTypes[i], item.Name, itemType)
+		}
+	}
 }

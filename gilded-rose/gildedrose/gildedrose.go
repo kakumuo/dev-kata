@@ -1,61 +1,76 @@
 package gildedrose
 
+import "strings"
+
 type Item struct {
 	Name            string
 	SellIn, Quality int
 }
 
+type ItemType int
+
+const (
+	IT_Generic ItemType = iota
+	IT_Aged
+	IT_Legendary
+	IT_Pass
+	IT_Conjured
+)
+
+func GetItemType(item *Item) ItemType {
+	name := strings.ToLower(item.Name)
+
+	if strings.Contains(name, "aged brie") {
+		return IT_Aged
+	} else if strings.Contains(name, "sulfuras") {
+		return IT_Legendary
+	} else if strings.Contains(name, "backstage pass") {
+		return IT_Pass
+	} else if strings.Contains(name, "conjured") {
+		return IT_Conjured
+	}
+
+	return IT_Generic
+}
+
+const MAX_QUALITY, MIN_QUALITY = 50, 0
+
 func UpdateQuality(items []*Item) {
-	for i := 0; i < len(items); i++ {
+	for _, item := range items {
+		itemType := GetItemType(item)
 
-		if items[i].Name != "Aged Brie" && items[i].Name != "Backstage passes to a TAFKAL80ETC concert" {
-			if items[i].Quality > 0 {
-				if items[i].Name == "Conjured Mana Cake" {
-					items[i].Quality = items[i].Quality - 2
-				} else if items[i].Name != "Sulfuras, Hand of Ragnaros" {
-					items[i].Quality = items[i].Quality - 1
-				}
-			}
-		} else {
-			if items[i].Quality < 50 {
-				items[i].Quality = items[i].Quality + 1
-				if items[i].Name == "Backstage passes to a TAFKAL80ETC concert" {
-					if items[i].SellIn < 11 {
-						if items[i].Quality < 50 {
-							items[i].Quality = items[i].Quality + 1
-						}
-					}
-					if items[i].SellIn < 6 {
-						if items[i].Quality < 50 {
-							items[i].Quality = items[i].Quality + 1
-						}
-					}
-				}
-			}
+		if itemType != IT_Legendary {
+			item.SellIn -= 1
 		}
 
-		if items[i].Name != "Sulfuras, Hand of Ragnaros" {
-			items[i].SellIn = items[i].SellIn - 1
-		}
-
-		if items[i].SellIn < 0 {
-			if items[i].Name != "Aged Brie" {
-				if items[i].Name != "Backstage passes to a TAFKAL80ETC concert" {
-					if items[i].Quality > 0 {
-						if items[i].Name == "Conjured Mana Cake" {
-							items[i].Quality = items[i].Quality - 2
-						} else if items[i].Name != "Sulfuras, Hand of Ragnaros" {
-							items[i].Quality = items[i].Quality - 1
-						}
-					}
-				} else {
-					items[i].Quality = items[i].Quality - items[i].Quality
-				}
+		switch itemType {
+		case IT_Legendary:
+		case IT_Aged:
+			item.Quality += 1
+		case IT_Conjured:
+			item.Quality -= 2
+			if item.SellIn < 0 {
+				item.Quality -= 2
+			}
+		case IT_Pass:
+			if item.SellIn < 0 {
+				item.Quality = 0
+			} else if item.SellIn < 5 {
+				item.Quality += 3
+			} else if item.SellIn < 10 {
+				item.Quality += 2
 			} else {
-				if items[i].Quality < 50 {
-					items[i].Quality = items[i].Quality + 1
-				}
+				item.Quality += 1
 			}
+		case IT_Generic:
+			item.Quality -= 1
+			if item.SellIn < 0 {
+				item.Quality -= 1
+			}
+		}
+
+		if itemType != IT_Legendary {
+			item.Quality = max(min(item.Quality, MAX_QUALITY), MIN_QUALITY)
 		}
 	}
 
